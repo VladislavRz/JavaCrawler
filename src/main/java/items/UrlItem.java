@@ -32,17 +32,6 @@ public class UrlItem {
         return hash;
     }
 
-    // Вычисление хэша
-    public static String calcHash(String str) throws NoSuchAlgorithmException {
-        String hash;
-        byte[] urlBytes = (str).getBytes(StandardCharsets.UTF_8);
-        MessageDigest digest = MessageDigest.getInstance("MD5");
-        byte[] hashedBytes = digest.digest(urlBytes);
-        hash = String.format("%032X", new BigInteger(1, hashedBytes));
-
-        return hash;
-    }
-
     @Override
     public String toString() {
         return "UrlItem{" +

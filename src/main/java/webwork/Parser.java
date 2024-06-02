@@ -5,10 +5,20 @@ import items.UrlItem;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public class Parser {
-    private static String getTitle(Document doc) {
-        return doc.select("h1").first().text();
+    private static final String DOMAIN = "https://histrf.ru";
+
+    private static String getTitle(Element el) {
+        return el.select("h2").first().text();
+    }
+
+    private static String getUrl(Element el) {
+        return DOMAIN + el.select("a").first().attr("href");
     }
 
     private static String getBody(Document doc) {
@@ -29,21 +39,47 @@ public class Parser {
                    .select("div.absolute").last().text();
     }
 
-    public static NewsItem parse(UrlItem url, Document doc) {
+    public static String calcHash(String str) throws NoSuchAlgorithmException {
+        String hash;
+        byte[] urlBytes = (str).getBytes(StandardCharsets.UTF_8);
+        MessageDigest digest = MessageDigest.getInstance("MD5");
+        byte[] hashedBytes = digest.digest(urlBytes);
+        hash = String.format("%032X", new BigInteger(1, hashedBytes));
+
+        return hash;
+    }
+
+    public static UrlItem parseNote(Element el) throws NoSuchAlgorithmException {
+        UrlItem item = new UrlItem();
+        String title;
+        String url;
+        String hash;
+
+        // Получение данных
+        title = getTitle(el);
+        url = getUrl(el);
+        hash = calcHash(url + ":" + title);
+
+        // Инициализация полей
+        item.setUrl(url);
+        item.setTitle(title);
+        item.setHash(hash);
+
+        return item;
+    }
+    public static NewsItem parseNews(UrlItem url, Document doc) {
         NewsItem item = new NewsItem();
         String body;
-        String title;
         String date;
 
-        // Получение заголовка
-        title = getTitle(doc);
+        // Получение данных
         body = getBody(doc);
         date = getDate(doc);
 
-        // Инициализация полей новости
+        // Инициализация полей
         item.setUrl(url.getUrl());
         item.setBody(body);
-        item.setTitle(title);
+        item.setTitle(url.getTitle());
         item.setDate(date);
         item.setHash(url.getHash());
 
