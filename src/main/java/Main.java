@@ -2,8 +2,8 @@ import items.NewsItem;
 import items.UrlItem;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import utils.Parser;
-import utils.Requester;
+import webwork.Parser;
+import webwork.Requester;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;

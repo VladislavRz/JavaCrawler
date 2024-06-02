@@ -1,4 +1,4 @@
-package utils;
+package webwork;
 
 import org.jsoup.Connection.Response;
 import org.jsoup.Jsoup;

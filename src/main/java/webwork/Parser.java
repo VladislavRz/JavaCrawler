@@ -1,4 +1,4 @@
-package utils;
+package webwork;
 
 import items.NewsItem;
 import items.UrlItem;
