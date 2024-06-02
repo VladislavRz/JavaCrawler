@@ -1,10 +1,12 @@
 import items.NewsItem;
+import items.UrlItem;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import parser.Parser;
-import parser.Requester;
+import utils.Parser;
+import utils.Requester;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 
 public class Main {
     public static final String URL = "https://histrf.ru/read/articles";
@@ -14,18 +16,29 @@ public class Main {
         try {
             // Получение основного документа
             Document doc = Requester.getRequest(URL);
+            if(doc == null) return;
+
             Element main_div = doc.select("div.flex.flex-wrap").last();
-            String link = main_div.select("a").first().attr("href");
+            String title = main_div.select("h2").first().text();
+            String uri = main_div.select("a").first().attr("href");
+
+            // Создание объекта URL
+            UrlItem item = new UrlItem();
+            item.setUrl(DOMAIN + uri);
+            item.setTitle(title);
+            item.setHash(UrlItem.calcHash(item.getUrl() + ":" + item.getTitle()));
+            System.out.println(item);
 
             // Получение новости
-            doc = Requester.getRequest(DOMAIN + link);
+            doc = Requester.getRequest(item.getUrl());
+            if(doc == null) return;
 
             // Парсинг страницы
-            NewsItem news = Parser.parse(DOMAIN + link, doc);
-            System.out.println(news.toString());
+            NewsItem news = Parser.parse(item, doc);
+            System.out.println(news);
 
         }
-        catch (IOException e) {
+        catch (IOException | NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
     }
