@@ -1,12 +1,12 @@
-package tools;
-
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.MessageProperties;
-
-
-public class Consumer extends Thread {
+//package tools;
+//
+//import com.rabbitmq.client.Channel;
+//import com.rabbitmq.client.Connection;
+//import com.rabbitmq.client.ConnectionFactory;
+//import com.rabbitmq.client.MessageProperties;
+//
+//
+//public class Consumer extends Thread {
 //    public static void main(String[] args) throws Exception {
 //        ConnectionFactory factory = new ConnectionFactory();
 //        factory.setUsername("rabbitmq");
@@ -38,26 +38,26 @@ public class Consumer extends Thread {
 //        channel.close();
 //        conn.close();
 //    }
-
-    private Channel channel;
-    private String message;
-    private long tag;
-
-//    public MessageThread(Channel channel, String message, long tag) {
-//        this.channel = channel;
-//        this.message = message;
-//        this.tag = tag;
+//
+//    private Channel channel;
+//    private String message;
+//    private long tag;
+//
+////    public MessageThread(Channel channel, String message, long tag) {
+////        this.channel = channel;
+////        this.message = message;
+////        this.tag = tag;
+////    }
+//
+//    @Override
+//    public void run() {
+//        try {
+//            System.err.println("Message received " + message);
+//            sleep(5000); // имитируем обработку сообщения
+//            channel.basicAck(tag, false);//подтверждаете получение сообщения
+//            System.err.println("Message deleted " + message);
+//        } catch (Exception ex) {
+//            ex.printStackTrace(System.err);
+//        }
 //    }
-
-    @Override
-    public void run() {
-        try {
-            System.err.println("Message received " + message);
-            sleep(5000); // имитируем обработку сообщения
-            channel.basicAck(tag, false);//подтверждаете получение сообщения
-            System.err.println("Message deleted " + message);
-        } catch (Exception ex) {
-            ex.printStackTrace(System.err);
-        }
-    }
-}
+//}

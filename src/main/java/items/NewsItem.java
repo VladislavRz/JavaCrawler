@@ -1,11 +1,28 @@
 package items;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+
 public class NewsItem {
     private String body;
     private String date;
     private String hash;
     private String title;
     private String url;
+
+    public NewsItem() {}
+
+    public NewsItem(String json) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode node = mapper.readTree(json);
+        this.url = node.get("url").asText();
+        this.title = node.get("title").asText();
+        this.hash = node.get("hash").asText();
+        this.date = node.get("date").asText();
+        this.body = node.get("body").asText();
+    }
 
     // Setters
     public void setBody(String body) {
@@ -38,6 +55,10 @@ public class NewsItem {
         return title;
     }
 
+    public String getUrl() {
+        return url;
+    }
+
     @Override
     public String toString() {
         return "NewsItem{" +
@@ -47,5 +68,10 @@ public class NewsItem {
                 ", date='" + date + "'" +
                 ", hash='" + hash + "'" +
                 "}";
+    }
+
+    public String obj2json() throws JsonProcessingException {
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        return ow.writeValueAsString(this);
     }
 }

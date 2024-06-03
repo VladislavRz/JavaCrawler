@@ -1,14 +1,24 @@
 package items;
 
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 
 public class UrlItem {
     private String hash;
     private String title;
     private String url;
+
+    public UrlItem(){}
+
+    public UrlItem(String json) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode node = mapper.readTree(json);
+        this.url = node.get("url").asText();
+        this.title = node.get("title").asText();
+        this.hash = node.get("hash").asText();
+    }
 
     // Setters
     public void setTitle(String title) {
@@ -39,5 +49,10 @@ public class UrlItem {
                 ", title='" + title + "'" +
                 ", hash='" + hash + "'" +
                 "}";
+    }
+
+    public String obj2json() throws JsonProcessingException {
+        ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+        return ow.writeValueAsString(this);
     }
 }

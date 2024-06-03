@@ -49,6 +49,18 @@ public class Parser {
         return hash;
     }
 
+    public static Elements parseMain(Document doc) {
+        Elements articles = doc.select("div.flex.flex-wrap")
+                .last()
+                .select("div.w-full")
+                .not(".relative")
+                .not(".aspect-wrap")
+                .not(".flex")
+                .not("overflow-hidden");
+
+        return articles;
+    }
+
     public static UrlItem parseNote(Element el) throws NoSuchAlgorithmException {
         UrlItem item = new UrlItem();
         String title;
