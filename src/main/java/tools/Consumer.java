@@ -1,63 +1,58 @@
-//package tools;
-//
-//import com.rabbitmq.client.Channel;
-//import com.rabbitmq.client.Connection;
-//import com.rabbitmq.client.ConnectionFactory;
-//import com.rabbitmq.client.MessageProperties;
-//
-//
-//public class Consumer extends Thread {
-//    public static void main(String[] args) throws Exception {
-//        ConnectionFactory factory = new ConnectionFactory();
-//        factory.setUsername("rabbitmq");
-//        factory.setPassword("rabbitmq");
-//        factory.setVirtualHost("/");
-//        factory.setHost("127.0.0.1");
-//        factory.setPort(5672);
-//        Connection conn = factory.newConnection();
-//        Channel channel = conn.createChannel();
-//        String exchangeName = "myExchange";
-//        String queueName = "myQueue";
-//        String routingKey = "testRoute";
-//        boolean durable = true;
-//        channel.exchangeDeclare(exchangeName, "direct", durable);
-//        channel.queueDeclare(queueName, durable, false, false, null);
-//        channel.queueBind(queueName, exchangeName, routingKey);
-//        QueueingConsumer consumer = new QueueingConsumer(channel);
-//        channel.basicConsume(queueName, false, consumer);
-//        boolean run = true;
-//        while (run) {
-//            QueueingConsumer.Delivery delivery;
-//            try {
-//                delivery = consumer.nextDelivery();
-//                new MessageThread(channel, new String(delivery.getBody()), delivery.getEnvelope().getDeliveryTag()).start();
-//            } catch (InterruptedException ie) {
-//                continue;
-//            }
-//        }
-//        channel.close();
-//        conn.close();
-//    }
-//
-//    private Channel channel;
-//    private String message;
-//    private long tag;
-//
-////    public MessageThread(Channel channel, String message, long tag) {
-////        this.channel = channel;
-////        this.message = message;
-////        this.tag = tag;
-////    }
-//
-//    @Override
-//    public void run() {
-//        try {
-//            System.err.println("Message received " + message);
-//            sleep(5000); // имитируем обработку сообщения
-//            channel.basicAck(tag, false);//подтверждаете получение сообщения
-//            System.err.println("Message deleted " + message);
-//        } catch (Exception ex) {
-//            ex.printStackTrace(System.err);
-//        }
-//    }
-//}
+package tools;
+
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.MessageProperties;
+
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.TimeoutException;
+
+
+public abstract class Consumer extends Thread {
+    private static final String MAIN_URL = "https://histrf.ru/read/articles";
+    private static final String USER = "rabbitmq";
+    private static final String PASS = "rabbitmq";
+    private static final String VHOST = "/";
+    private static final String LHOST = "127.0.0.1";
+    private static final int PORT = 5672;
+    protected final String exchangeName;
+    protected final String queueKey;
+    protected final String queueName;
+
+    public Consumer(String exchangeName, String queueName, String queueKey) {
+        this.exchangeName = exchangeName;
+        this.queueName = queueName;
+        this.queueKey = queueKey;
+    }
+
+    @Override
+    public void run() {
+        try{
+            ConnectionFactory factory = new ConnectionFactory();
+            factory.setUsername(USER);
+            factory.setPassword(PASS);
+            factory.setVirtualHost(VHOST);
+            factory.setHost(LHOST);
+            factory.setPort(PORT);
+            Connection conn = factory.newConnection();
+            Channel channel = conn.createChannel();
+
+            channel.exchangeDeclare(exchangeName, "direct", durable);
+            channel.queueDeclare(queueName, durable, false, false, null);
+            channel.queueBind(queueName, exchangeName, queueKey);
+            channel.basicConsume(queueName, false, this.consume);
+
+            // TODO: Взятие сообщений из очереди
+
+            channel.close();
+            conn.close();
+        }
+        catch (IOException | TimeoutException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    protected abstract void consume(Channel channel);
+}

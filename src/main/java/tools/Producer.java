@@ -22,7 +22,14 @@ public class Producer extends Thread {
     private static final String VHOST = "/";
     private static final String LHOST = "127.0.0.1";
     private static final int PORT = 5672;
+    private final String exchangeName;
+    private final String queueKey;
 
+
+    public Producer(String exchangeName, String queueKey) {
+        this.exchangeName = exchangeName;
+        this.queueKey = queueKey;
+    }
 
     @Override
     public void run() {
@@ -35,8 +42,6 @@ public class Producer extends Thread {
             factory.setPort(PORT);
             Connection conn = factory.newConnection();
             Channel channel = conn.createChannel();
-            String exchangeName = "myExchange";
-            String routingKey = "testRoute";
 
             produce(channel);
 
@@ -55,7 +60,10 @@ public class Producer extends Thread {
 
         for(Element article : articles) {
             item = Parser.parseNote(article);
-            channel.basicPublish(exchangeName, routingKey, MessageProperties.PERSISTENT_TEXT_PLAIN, item.obj2json().getBytes());
+            channel.basicPublish(exchangeName,
+                                 queueKey,
+                                 MessageProperties.PERSISTENT_TEXT_PLAIN,
+                                 item.obj2json().getBytes());
         }
     }
 }
