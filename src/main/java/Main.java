@@ -1,44 +1,34 @@
-import items.NewsItem;
-import items.UrlItem;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import webwork.Parser;
+import tools.MsgProducer;
+import tools.NewsConsumer;
+import tools.UrlConsumer;
 import webwork.Requester;
 
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 
 public class Main {
-    public static final String URL = "https://histrf.ru/read/articles";
+    private static final String exchangeName = "CrawlerExchange";
+    private static final String urlQueueName = "UrlQueue";
+    private static final String newsQueueName = "NewsQueue";
+    private static final String urlQueueKey = "UrlQueueKey";
+    private static final String newsQueueKey = "NewsQueueKey";
 
     public static void main(String[] args) {
+        MsgProducer producer = new MsgProducer(exchangeName, urlQueueKey);
+        UrlConsumer urlConsumer = new UrlConsumer(exchangeName, urlQueueName, urlQueueKey, newsQueueKey);
+        NewsConsumer newsConsumer = new NewsConsumer(exchangeName, newsQueueName, newsQueueKey);
+
         try {
-            // Получение основного документа
-            Document doc = Requester.getRequest(URL);
-            if(doc == null) return;
-            
-            Element main_div = doc.select("div.flex.flex-wrap").last();
-            Elements divs = main_div.select("div.w-full")
-                                    .not(".relative")
-                                    .not(".aspect-wrap")
-                                    .not(".flex")
-                                    .not("overflow-hidden");
+            producer.start();
+            urlConsumer.start();
+            newsConsumer.start();
 
-//            // Создание объекта URL
-//            UrlItem item = Parser.parseNote(main_div);
-//            System.out.println(item);
-//
-//            // Получение новости
-//            doc = Requester.getRequest(item.getUrl());
-//            if(doc == null) return;
-//
-//            // Парсинг страницы
-//            NewsItem news = Parser.parseNews(item, doc);
-//            System.out.println(news);
-
+            // Ожидание окончания выполнения потоков
+            producer.join();
+            urlConsumer.join();
+            newsConsumer.join();
         }
-        catch (IOException /*| NoSuchAlgorithmException */ e) {
+        catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
