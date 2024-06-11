@@ -15,13 +15,12 @@ public class NewsConsumer extends MsgConsumer {
     protected void consume(Channel channel, Envelope envelope, String body) throws IOException {
 
         // Обработка сообщения
-        long deliveryTag = envelope.getDeliveryTag();
         NewsItem news = new NewsItem(body);
 
         // Вывод новости
         System.out.println(news);
 
-        // Удаление сообщения из очереди
-        channel.basicAck(deliveryTag, false);
+        // Удаление из очереди
+        channel.basicAck(envelope.getDeliveryTag(), false);
     }
 }

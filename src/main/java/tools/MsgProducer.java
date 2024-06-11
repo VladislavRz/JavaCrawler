@@ -33,8 +33,8 @@ public class MsgProducer extends Thread {
 
     @Override
     public void run() {
-        System.out.println("Start Producer");
         try{
+            // Установка соединения
             ConnectionFactory factory = new ConnectionFactory();
             factory.setUsername(USER);
             factory.setPassword(PASS);
@@ -44,11 +44,12 @@ public class MsgProducer extends Thread {
             Connection conn = factory.newConnection();
             Channel channel = conn.createChannel();
 
+            // Запись в очередь
             produce(channel);
 
+            // Закрытие соединения
             channel.close();
             conn.close();
-            System.out.println("Finish Producer");
         }
         catch (IOException | TimeoutException | NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
@@ -56,15 +57,18 @@ public class MsgProducer extends Thread {
     }
 
     private void produce(Channel channel) throws IOException, NoSuchAlgorithmException {
+
+        // Парсинг главной страницы
         UrlItem item;
         Document main_page = Requester.getRequest(MAIN_URL);
         Elements articles = Parser.parseMain(main_page);
 
+        // Отправка в очередь
         for(Element article : articles) {
             item = Parser.parseNote(article);
             channel.basicPublish(exchangeName,
                                  queueKey,
-                                 MessageProperties.PERSISTENT_TEXT_PLAIN,
+                                 null,
                                  item.obj2json().getBytes());
         }
     }

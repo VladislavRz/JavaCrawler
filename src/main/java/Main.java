@@ -1,10 +1,6 @@
-import org.jsoup.nodes.Document;
 import tools.MsgProducer;
 import tools.NewsConsumer;
 import tools.UrlConsumer;
-import webwork.Requester;
-
-import java.io.IOException;
 
 public class Main {
     private static final String exchangeName = "CrawlerExchange";
@@ -14,11 +10,14 @@ public class Main {
     private static final String newsQueueKey = "NewsQueueKey";
 
     public static void main(String[] args) {
+
+        //Создание обработчиков
         MsgProducer producer = new MsgProducer(exchangeName, urlQueueKey);
         UrlConsumer urlConsumer = new UrlConsumer(exchangeName, urlQueueName, urlQueueKey, newsQueueKey);
         NewsConsumer newsConsumer = new NewsConsumer(exchangeName, newsQueueName, newsQueueKey);
 
         try {
+            // Запуск потоков с обработкой страниц
             producer.start();
             urlConsumer.start();
             newsConsumer.start();

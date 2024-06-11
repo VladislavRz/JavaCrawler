@@ -1,8 +1,6 @@
 package tools;
 
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Envelope;
-import com.rabbitmq.client.MessageProperties;
+import com.rabbitmq.client.*;
 import items.NewsItem;
 import items.UrlItem;
 import org.jsoup.nodes.Document;
@@ -22,22 +20,18 @@ public class UrlConsumer extends MsgConsumer {
     @Override
     protected void consume(Channel channel, Envelope envelope, String body) throws IOException {
 
-        System.out.println("Start Url Consumer");
-
         // Парсинг страницы
-        long deliveryTag = envelope.getDeliveryTag();
         UrlItem url = new UrlItem(body);
         Document doc = Requester.getRequest(url.getUrl());
         NewsItem news = Parser.parseNews(url, doc);
 
+        // Удаление из очереди
+        channel.basicAck(envelope.getDeliveryTag(), false);
+
         // Отправка в новую очередь
         channel.basicPublish(exchangeName,
                 newsQueuekey,
-                MessageProperties.PERSISTENT_TEXT_PLAIN,
+                null,
                 news.obj2json().getBytes());
-
-        // Удаление сообщения из очереди
-        channel.basicAck(deliveryTag, false);
-        System.out.println("Finish Url Consumer");
     }
 }
