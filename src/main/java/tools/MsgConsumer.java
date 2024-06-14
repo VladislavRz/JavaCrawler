@@ -17,12 +17,14 @@ public abstract class MsgConsumer extends Thread {
     protected final String exchangeName;
     protected final String queueKey;
     protected final String queueName;
+    protected final ElasticClient elastic;
 
 
     public MsgConsumer(String exchangeName, String queueName, String queueKey) {
         this.exchangeName = exchangeName;
         this.queueName = queueName;
         this.queueKey = queueKey;
+        this.elastic = ElasticClient.getInstance();
     }
 
     @Override

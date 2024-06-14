@@ -17,8 +17,8 @@ public class NewsConsumer extends MsgConsumer {
         // Обработка сообщения
         NewsItem news = new NewsItem(body);
 
-        // Вывод новости
-        System.out.println(news);
+        // Отправка в базу данных
+        elastic.insertNote(news);
 
         // Удаление из очереди
         channel.basicAck(envelope.getDeliveryTag(), false);

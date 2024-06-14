@@ -22,13 +22,16 @@ public class MsgProducer extends Thread {
     private static final String VHOST = "/";
     private static final String LHOST = "127.0.0.1";
     private static final int PORT = 5672;
+
     private final String exchangeName;
     private final String queueKey;
+    private final ElasticClient elastic;
 
 
     public MsgProducer(String exchangeName, String queueKey) {
         this.exchangeName = exchangeName;
         this.queueKey = queueKey;
+        this.elastic = ElasticClient.getInstance();
     }
 
     @Override
@@ -66,6 +69,9 @@ public class MsgProducer extends Thread {
         // Отправка в очередь
         for(Element article : articles) {
             item = Parser.parseNote(article);
+
+            if (elastic.checkNote(item)) continue;
+
             channel.basicPublish(exchangeName,
                                  queueKey,
                                  null,

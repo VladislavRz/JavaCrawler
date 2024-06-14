@@ -1,3 +1,4 @@
+import tools.ElasticClient;
 import tools.MsgProducer;
 import tools.NewsConsumer;
 import tools.UrlConsumer;
@@ -10,6 +11,11 @@ public class Main {
     private static final String newsQueueKey = "NewsQueueKey";
 
     public static void main(String[] args) {
+        // Создание клиента базы данных
+        ElasticClient elastic = ElasticClient.getInstance();
+
+        // Создание индекса
+        elastic.createIndex();
 
         //Создание обработчиков
         MsgProducer producer = new MsgProducer(exchangeName, urlQueueKey);
