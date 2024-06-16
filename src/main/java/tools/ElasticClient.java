@@ -4,7 +4,9 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
+import co.elastic.clients.elasticsearch.core.MgetResponse;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.mget.MultiGetResponseItem;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
@@ -96,15 +98,24 @@ public class ElasticClient {
 
     public void searchNote() {
         SearchResponse<NewsItem> response = null;
+        MgetResponse<NewsItem> mgetResponses = null;
 
         try {
-            System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- AND QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
-            response = andQuery();
-            printNote(response);
+             System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- AND QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
+             response = andQuery();
+             printNote(response);
 
-            System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- OR QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
-            response = orQuery();
-            printNote(response);
+             System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- OR QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
+             response = orQuery();
+             printNote(response);
+
+             System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- Script QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
+             response = scriptQuery();
+             printNote(response);
+
+             System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+- MultiGet QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
+             mgetResponses = mgetQuery();
+             printMultiGet(mgetResponses);
 
         } catch (IOException e) {
             // TODO: Добавить лог
@@ -113,37 +124,73 @@ public class ElasticClient {
 
     // Собственные функции поиска
     private SearchResponse<NewsItem> andQuery() throws IOException {
-        Query title = MatchQuery.of(m -> m.field("title")
+
+        // Задание условий A и B
+        Query condA = MatchQuery.of(m -> m.field("title")
                         .query("Европы"))
                         ._toQuery();
 
-        Query date = MatchQuery.of(m -> m.field("date")
+        Query condB = MatchQuery.of(m -> m.field("date")
                         .query("5/31/2024"))
                         ._toQuery();
 
+        // Запрос A and B
         SearchResponse<NewsItem> response = client
-                .search(s -> s.query(q -> q.bool(b -> b.must(title, date))), NewsItem.class);
+                .search(s -> s.query(q -> q.bool(b -> b.must(condA).must(condB))), NewsItem.class);
 
         return response;
     }
 
     private SearchResponse<NewsItem> orQuery() throws IOException {
-        Query title = MatchQuery.of(m -> m.field("title")
+
+        // Задание условий A и B
+        Query condA = MatchQuery.of(m -> m.field("title")
                         .query("Европы"))
                 ._toQuery();
 
-        Query body = MatchQuery.of(m -> m.field("date")
+        Query condB = MatchQuery.of(m -> m.field("date")
                         .query("Россия"))
                 ._toQuery();
 
+        // Запрос A or B
         SearchResponse<NewsItem> response = client
-                .search(s -> s.query(q -> q.bool(b -> b.should(title, body))), NewsItem.class);
+                .search(s -> s.query(q -> q.bool(b -> b.should(condA).should(condB))), NewsItem.class);
+
+        return response;
+    }
+
+    private MgetResponse<NewsItem> mgetQuery() throws IOException {
+        MgetResponse<NewsItem> response = client.mget(mgq -> mgq
+                        .index(indexName)
+                        .docs(d -> d
+                                .id("nZQ7F5ABbNG45bL-9f0A")
+                                .id("o5Q7F5ABbNG45bL-_v2U")
+                                .id("nJQ7F5ABbNG45bL-8_0P")),
+                NewsItem.class
+        );
+
+        return response;
+    }
+
+    private SearchResponse<NewsItem> scriptQuery () throws IOException {
+        SearchResponse<NewsItem> response = client.search(s -> s
+                        .index(indexName)
+                        .query(q0 -> q0
+                                .scriptScore(ss -> ss
+                                        .query(q -> q
+                                                .matchAll(ma -> ma))
+                                        .script(scr -> scr
+                                                .inline(in -> in
+                                                        .lang("painless")
+                                                        .source("1"))))),
+                NewsItem.class
+        );
 
         return response;
     }
 
 
-    // Вывод запроса к БД
+    // Вывод запросов к БД
     public void printNote(SearchResponse<NewsItem> response) {
         List<Hit<NewsItem>> hits = response.hits().hits();
 
@@ -159,6 +206,9 @@ public class ElasticClient {
         }
     }
 
-
-
+    public void printMultiGet(MgetResponse<NewsItem> response) {
+        for (MultiGetResponseItem<NewsItem> doc : response.docs()) {
+            System.out.println(doc.result().source());
+        }
+    }
 }

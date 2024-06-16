@@ -18,7 +18,6 @@ public class Main {
 
         // Создание индекса
         elastic.createIndex();
-        elastic.searchNote();
 
         //Создание обработчиков
         MsgProducer producer = new MsgProducer(exchangeName, urlQueueKey);
@@ -35,6 +34,10 @@ public class Main {
             producer.join();
             urlConsumer.join();
             newsConsumer.join();
+
+            // Поиск значений в базе
+            elastic.searchNote();
+
         } catch (InterruptedException | RuntimeException e) {
             e.printStackTrace();
         }
