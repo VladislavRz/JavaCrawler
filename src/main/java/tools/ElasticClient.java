@@ -57,11 +57,11 @@ public class ElasticClient {
 
             client.indices().create(c -> c.index(indexName)
                     .mappings(mp -> mp
-                            .properties("title", p -> p.text(t -> t))
-                            .properties("body", p -> p.text(t -> t))
-                            .properties("date", p -> p.text(t -> t))
-                            .properties("url", p -> p.text(t -> t))
-                            .properties("hash", p -> p.text(t -> t))
+                            .properties("title", p -> p.text(t -> t.fielddata(true)))
+                            .properties("body", p -> p.text(t -> t.fielddata(true)))
+                            .properties("date", p -> p.text(t -> t.fielddata(true)))
+                            .properties("url", p -> p.text(t -> t.fielddata(true)))
+                            .properties("hash", p -> p.text(t -> t.fielddata(true)))
                     ));
         } catch (IOException e) {
             // TODO: Добавить лог
@@ -101,21 +101,21 @@ public class ElasticClient {
         MgetResponse<NewsItem> mgetResponses = null;
 
         try {
-             System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- AND QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
-             response = andQuery();
-             printNote(response);
+              System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- AND QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
+              response = andQuery();
+              printNote(response);
 
-             System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- OR QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
-             response = orQuery();
-             printNote(response);
+              System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- OR QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
+              response = orQuery();
+              printNote(response);
 
              System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- Script QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
              response = scriptQuery();
              printNote(response);
 
-             System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+- MultiGet QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
-             mgetResponses = mgetQuery();
-             printMultiGet(mgetResponses);
+              System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+- MultiGet QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
+              mgetResponses = mgetQuery();
+              printMultiGet(mgetResponses);
 
         } catch (IOException e) {
             // TODO: Добавить лог
@@ -163,9 +163,9 @@ public class ElasticClient {
         MgetResponse<NewsItem> response = client.mget(mgq -> mgq
                         .index(indexName)
                         .docs(d -> d
-                                .id("nZQ7F5ABbNG45bL-9f0A")
-                                .id("o5Q7F5ABbNG45bL-_v2U")
-                                .id("nJQ7F5ABbNG45bL-8_0P")),
+                                .id("tcIBI5ABdR4_sUbSBq-I")
+                                .id("q8IAI5ABdR4_sUbS9a_H")
+                                .id("ssIBI5ABdR4_sUbSAa-o")),
                 NewsItem.class
         );
 
@@ -173,19 +173,17 @@ public class ElasticClient {
     }
 
     private SearchResponse<NewsItem> scriptQuery () throws IOException {
-        SearchResponse<NewsItem> response = client.search(s -> s
-                        .index(indexName)
-                        .query(q0 -> q0
-                                .scriptScore(ss -> ss
-                                        .query(q -> q
-                                                .matchAll(ma -> ma))
-                                        .script(scr -> scr
-                                                .inline(in -> in
-                                                        .lang("painless")
-                                                        .source("1"))))),
-                NewsItem.class
-        );
 
+        SearchResponse<NewsItem> response = client
+                .search(s -> s
+                        .query(q -> q
+                                .bool(b -> b
+                                        .filter(f -> f
+                                                .script(scr0 -> scr0
+                                                        .script(scr1 -> scr1
+                                                                .inline(i -> i
+                                                                        .source("doc['title'].value.length() > 4"))))))),
+                        NewsItem.class);
         return response;
     }
 
@@ -200,6 +198,7 @@ public class ElasticClient {
         }
 
         for (Hit<NewsItem> hit: hits) {
+            System.out.println(hit.id());
             NewsItem note = hit.source();
             assert note != null;
             System.out.println(note);
