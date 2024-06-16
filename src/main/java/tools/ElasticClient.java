@@ -1,8 +1,11 @@
 package tools;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
@@ -14,6 +17,7 @@ import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 
 import java.io.IOException;
+import java.util.List;
 
 public class ElasticClient {
     private static ElasticClient instance = null;
@@ -90,8 +94,71 @@ public class ElasticClient {
         return res.hits().total().value() != 0;
     }
 
-    public void searchNote(UrlItem item) {}
-    public synchronized void printNote() {}
+    public void searchNote() {
+        SearchResponse<NewsItem> response = null;
+
+        try {
+            System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- AND QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
+            response = andQuery();
+            printNote(response);
+
+            System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- OR QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
+            response = orQuery();
+            printNote(response);
+
+        } catch (IOException e) {
+            // TODO: Добавить лог
+        }
+    }
+
+    // Собственные функции поиска
+    private SearchResponse<NewsItem> andQuery() throws IOException {
+        Query title = MatchQuery.of(m -> m.field("title")
+                        .query("Европы"))
+                        ._toQuery();
+
+        Query date = MatchQuery.of(m -> m.field("date")
+                        .query("5/31/2024"))
+                        ._toQuery();
+
+        SearchResponse<NewsItem> response = client
+                .search(s -> s.query(q -> q.bool(b -> b.must(title, date))), NewsItem.class);
+
+        return response;
+    }
+
+    private SearchResponse<NewsItem> orQuery() throws IOException {
+        Query title = MatchQuery.of(m -> m.field("title")
+                        .query("Европы"))
+                ._toQuery();
+
+        Query body = MatchQuery.of(m -> m.field("date")
+                        .query("Россия"))
+                ._toQuery();
+
+        SearchResponse<NewsItem> response = client
+                .search(s -> s.query(q -> q.bool(b -> b.should(title, body))), NewsItem.class);
+
+        return response;
+    }
+
+
+    // Вывод запроса к БД
+    public void printNote(SearchResponse<NewsItem> response) {
+        List<Hit<NewsItem>> hits = response.hits().hits();
+
+        if (hits.isEmpty()) {
+            // TODO: Добавить логгирование
+            return;
+        }
+
+        for (Hit<NewsItem> hit: hits) {
+            NewsItem note = hit.source();
+            assert note != null;
+            System.out.println(note);
+        }
+    }
+
 
 
 }

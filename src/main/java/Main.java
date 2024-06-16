@@ -3,6 +3,8 @@ import tools.MsgProducer;
 import tools.NewsConsumer;
 import tools.UrlConsumer;
 
+import java.io.IOException;
+
 public class Main {
     private static final String exchangeName = "CrawlerExchange";
     private static final String urlQueueName = "UrlQueue";
@@ -16,6 +18,7 @@ public class Main {
 
         // Создание индекса
         elastic.createIndex();
+        elastic.searchNote();
 
         //Создание обработчиков
         MsgProducer producer = new MsgProducer(exchangeName, urlQueueKey);
@@ -32,8 +35,7 @@ public class Main {
             producer.join();
             urlConsumer.join();
             newsConsumer.join();
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException | RuntimeException e) {
             e.printStackTrace();
         }
     }
