@@ -35,8 +35,25 @@ public class Parser {
     }
 
     private static String getDate(Document doc) {
-        return  doc.select("div.absolute").last()
-                   .select("div.absolute").last().text();
+        String date = doc.select("div.absolute").last()
+                .select("div.absolute").last().text();
+
+        String[] split_str = date.split("/");
+        date = split_str[2] + "-";
+
+        if (split_str[0].length() == 1) {
+            date += "0" + split_str[0] + "-";
+        } else {
+            date += split_str[0] + "-";
+        }
+
+        if (split_str[1].length() == 1) {
+            date += "0" + split_str[1];
+        } else {
+            date += split_str[1];
+        }
+
+        return date;
     }
 
     public static String calcHash(String str) throws NoSuchAlgorithmException {

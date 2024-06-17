@@ -3,8 +3,6 @@ import tools.MsgProducer;
 import tools.NewsConsumer;
 import tools.UrlConsumer;
 
-import java.io.IOException;
-
 public class Main {
     private static final String exchangeName = "CrawlerExchange";
     private static final String urlQueueName = "UrlQueue";
@@ -13,14 +11,14 @@ public class Main {
     private static final String newsQueueKey = "NewsQueueKey";
 
     public static void main(String[] args) {
+
         // Создание клиента базы данных
         ElasticClient elastic = ElasticClient.getInstance();
 
-        // Создание индекса
+        // Создание индекса в базе данных
         elastic.createIndex();
-        // elastic.searchNote();
 
-        //Создание обработчиков
+        // Создание обработчиков
         MsgProducer producer = new MsgProducer(exchangeName, urlQueueKey);
         UrlConsumer urlConsumer = new UrlConsumer(exchangeName, urlQueueName, urlQueueKey, newsQueueKey);
         NewsConsumer newsConsumer = new NewsConsumer(exchangeName, newsQueueName, newsQueueKey);
@@ -31,10 +29,11 @@ public class Main {
             urlConsumer.start();
             newsConsumer.start();
 
-            Thread.sleep(5000);
+            Thread.sleep(10000);
 
             // Поиск значений в базе
             elastic.searchNote();
+            elastic.buildAggregations();
 
             // Ожидание окончания выполнения потоков
             producer.join();
