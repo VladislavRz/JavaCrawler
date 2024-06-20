@@ -9,6 +9,7 @@ import java.io.IOException;
 public class NewsConsumer extends MsgConsumer {
     public NewsConsumer(String exchangeName, String queueName, String queueKey) {
         super(exchangeName, queueName, queueKey);
+        logger.info("Start consume news");
     }
 
     @Override

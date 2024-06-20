@@ -15,6 +15,7 @@ public class UrlConsumer extends MsgConsumer {
     public UrlConsumer(String exchangeName, String queueName, String queueKey, String newsQueueKey) {
         super(exchangeName, queueName, queueKey);
         this.newsQueuekey = newsQueueKey;
+        logger.info("Start consume urls");
     }
 
     @Override
@@ -23,6 +24,12 @@ public class UrlConsumer extends MsgConsumer {
         // Парсинг страницы
         UrlItem url = new UrlItem(body);
         Document doc = Requester.getRequest(url.getUrl());
+
+        if (doc == null) {
+            channel.basicAck(envelope.getDeliveryTag(), false);
+            return;
+        }
+
         NewsItem news = Parser.parseNews(url, doc);
 
         // Удаление из очереди

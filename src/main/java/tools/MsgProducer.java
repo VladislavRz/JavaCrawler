@@ -3,11 +3,12 @@ package tools;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.MessageProperties;
 import items.UrlItem;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import webwork.Parser;
 import webwork.Requester;
 
@@ -26,12 +27,15 @@ public class MsgProducer extends Thread {
     private final String exchangeName;
     private final String queueKey;
     private final ElasticClient elastic;
+    private static final Logger logger = LoggerFactory.getLogger(MsgProducer.class);
 
 
     public MsgProducer(String exchangeName, String queueKey) {
         this.exchangeName = exchangeName;
         this.queueKey = queueKey;
         this.elastic = ElasticClient.getInstance();
+
+        logger.info("Start Produce messages");
     }
 
     @Override
@@ -64,6 +68,12 @@ public class MsgProducer extends Thread {
         // Парсинг главной страницы
         UrlItem item;
         Document main_page = Requester.getRequest(MAIN_URL);
+
+        if (main_page == null) {
+            logger.error("Can not get main page and exit");
+            System.exit(1);
+        }
+
         Elements articles = Parser.parseMain(main_page);
 
         // Отправка в очередь

@@ -18,6 +18,9 @@ import items.NewsItem;
 import items.UrlItem;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import webwork.Requester;
 
 import java.io.IOException;
 import java.util.List;
@@ -26,6 +29,7 @@ public class ElasticClient {
     private static ElasticClient instance = null;
 
     ElasticsearchClient client;
+    private static final Logger logger = LoggerFactory.getLogger(ElasticClient.class);
     private final String indexName = "articles";
     private final String dbURL = "http://localhost:9200";
 
@@ -40,6 +44,7 @@ public class ElasticClient {
                 restClient, new JacksonJsonpMapper(mapper));
 
         this.client = new ElasticsearchClient(transport);
+        logger.info("Connected to Elastic.");
     }
 
     public static synchronized ElasticClient getInstance() {
@@ -52,7 +57,7 @@ public class ElasticClient {
     public synchronized void createIndex() {
         try {
             if (client.indices().exists(ex -> ex.index(indexName)).value()) {
-                // TODO: Добавить лог
+                logger.info("Index " + indexName + " already exist!");
                 return;
             }
 
@@ -66,7 +71,7 @@ public class ElasticClient {
                     ));
 
         } catch (IOException e) {
-            // TODO: Добавить лог
+            e.printStackTrace();
         }
     }
 
@@ -78,7 +83,7 @@ public class ElasticClient {
                     .document(item));
 
         } catch (IOException e) {
-            // TODO: Добавить лог
+            e.printStackTrace();
         }
     }
 
@@ -92,7 +97,7 @@ public class ElasticClient {
                                     .field("hash")
                                     .query(item.getHash()))), NewsItem.class);
         } catch (IOException e) {
-            // TODO: Добавить лог
+            e.printStackTrace();
         }
 
         return res.hits().total().value() != 0;
@@ -103,24 +108,28 @@ public class ElasticClient {
         MgetResponse<NewsItem> mgetResponses = null;
 
         try {
+            logger.info("Send AND Query");
             System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- AND QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
             response = andQuery();
             printNote(response);
 
+            logger.info("Send OR Query");
             System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- OR QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
             response = orQuery();
             printNote(response);
 
+            logger.info("Send Script Query");
             System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- Script QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
             response = scriptQuery();
             printNote(response);
 
+            logger.info("Send Multiget Query");
             System.out.println("\n\n+-+-+-+-+-+-+-+-+-+-+-+-+-+- MultiGet QUERY -+-+-+-+-+-+-+-+-+-+-+-+-+-+\n\n");
             mgetResponses = mgetQuery();
             printMultiGet(mgetResponses);
 
         } catch (IOException e) {
-            // TODO: Добавить лог
+            e.printStackTrace();
         }
     }
 
@@ -141,7 +150,7 @@ public class ElasticClient {
 
 
         } catch (IOException e) {
-            // TODO: Добавить лог
+            e.printStackTrace();
         }
     }
 
@@ -260,7 +269,7 @@ public class ElasticClient {
         List<Hit<NewsItem>> hits = response.hits().hits();
 
         if (hits.isEmpty()) {
-            // TODO: Добавить логгирование
+            logger.info("Can't find docs in database");
             return;
         }
 

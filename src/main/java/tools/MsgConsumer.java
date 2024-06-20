@@ -1,6 +1,9 @@
 package tools;
 
 import com.rabbitmq.client.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import webwork.Requester;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -14,6 +17,7 @@ public abstract class MsgConsumer extends Thread {
     private static final String LHOST = "127.0.0.1";
     private static final int PORT = 5672;
 
+    protected static final Logger logger = LoggerFactory.getLogger(Requester.class);
     protected final String exchangeName;
     protected final String queueKey;
     protected final String queueName;
